@@ -1,0 +1,146 @@
+Запуск с помощью KRaft
+
+конфигурация KRaft находится в каталоге \config\kraft\
+broker.properties - конфигурация сервера, который действует как брокер, настраиваем топики и партиции
+controller.properties - конфигурация сервера, который действует как контроллер, он управляет метаданными кластера,
+                        координирует лидеров
+server.properties - конфигурация сервера, который действует и как контроллер, и как брокер. Эту конфигурацию мы
+                    и будем настраивать и использовать.
+
+Скрипты запуска находятся в каталоге \bin или, для windows, в каталоге bin\windows\ .
+                Соответственно расширения или .sh для linux или .bat для Windows.
+
+1. Надо сгенерировать ID для кластера.
+        Команда    .\kafka-storage.bat random-uuid  вернет уникальниый идентификатор, его сохранить.
+2. Форматируем логи для совместимости с KRaft-режимом
+        Команда     .\kafka-storage.bat format -t ИДЕНТИФИКАТОР -c ..\..\config\kraft\server.properties
+3. Запуск kafka с дефолтным конфигом
+        Команда     .\kafka-server-start.bat ..\..\config\kraft\server.properties
+
+-------  ЗАПУСК НЕСКОЛЬКИХ СЕРВЕРОВ В КЛАСТЕРЕ
+1. Надо сделать файл конфигурации под каждый сервер.
+    Копируем  server.properties в файл server-1.properties, server-2.properties, server-3.properties
+2. Изменяем свойства в файлах server-1.properties, server-2.properties, server-3.properties
+
+    строка 27   соответственно для каждого сервера свой id
+        - node.id=1 для server-1.properties,  node.id=2 для server-2.properties  ,  node.id=3 для server-1.properties
+
+    строка 42   listeners определяет список адресов (host:port) для брокеров и контроллеров. Это сетевые интерфейсы,
+                    которые kafka использует для общения с другими серверами и клиентами,
+                    PLAINTEXT - это брокер, CONTROLLER - это контроллер
+        - listeners=PLAINTEXT://:9092,CONTROLLER://:9093    для server-1.properties,
+          listeners=PLAINTEXT://:9094,CONTROLLER://:9095    для server-2.properties,
+          listeners=PLAINTEXT://:9096,CONTROLLER://:9097    для server-3.properties,
+
+    строка 30   Список контроллеров, которые составляют кворум в кластере и принимают решение по обеспечению
+                согласованности данных и отказоустойчивости. Делаем для всех серверов одинаковым.
+                Структура 1@localhost:9093  :  1 это node.id; @ это разделитель;  localhost:9093 это адрес контроллера из 42 строки (порт)
+        - controller.quorum.voters=1@localhost:9093,2@localhost:9095,3@localhost:9097
+
+    строка 49  Список адресов для соединения с брокером, отличается от свойства listeners, которое определяет адреса и порты, которые брокер
+                Kafka использует для прослушивания входящих подключений. Если слушается внешнее соединение, то вместо localhost надо указать ip-адрес
+        - advertised.listeners=PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093    для server-1.properties,
+          advertised.listeners=PLAINTEXT://localhost:9094,CONTROLLER://localhost:9095    для server-2.properties,
+          advertised.listeners=PLAINTEXT://localhost:9096,CONTROLLER://localhost:9097    для server-3.properties.
+
+    строка 78  Локальная директория метаданных, логов, снапшотов данного сервера. Делаем для каждого сервера свою.
+               При таком создании будет создана по пути C:\tmp\server-1\kraft-combined-logs
+        - log.dirs=/tmp/server-1/kraft-combined-logs    для server-1.properties,
+          log.dirs=/tmp/server-2/kraft-combined-logs    для server-2.properties,
+          log.dirs=/tmp/server-3/kraft-combined-logs    для server-3.properties.
+
+3. Собственно запуск кластера производится из каталога C:\Tools\kafka_2.13-3.9.1\bin\windows
+        команда для получения уникального идентификатора кластера
+         - Команда    .\kafka-storage.bat random-uuid  вернет уникальный ИДЕНТИФИКАТОР, его надо сохранить.
+         форматируем директории логов для каждого сервера
+         - .\kafka-storage.bat format -t ИДЕНТИФИКАТОР -c ..\..\config\kraft\server-1.properties
+           .\kafka-storage.bat format -t ИДЕНТИФИКАТОР -c ..\..\config\kraft\server-2.properties
+           .\kafka-storage.bat format -t ИДЕНТИФИКАТОР -c ..\..\config\kraft\server-3.properties
+         проверим, что создались каталоги в папке tmp
+
+         Запускаем каждый сервер в отдельном окне командной строки. Они должны быть открыты на протяжении всего времени работы сервера
+         -  .\kafka-server-start.bat ..\..\config\kraft\server-1.properties
+            .\kafka-server-start.bat ..\..\config\kraft\server-2.properties
+            .\kafka-server-start.bat ..\..\config\kraft\server-3.properties
+
+4. Остановка сервера. Чтобы не было потери данных, надо сначала остановить продюсера, затем консюмера, и только потом останавливать кластер
+        остановить один сервер:
+         - в командном окне с сервером выполнить Ctrl-C. Эта команда остановит один, текущий сервер, запущенный в этом окне.
+        остановить все серверы:
+         - открыть новое командное окно, перейти в каталог, где установлена Kafka   C:\Tools\kafka_2.13-3.9.1\bin\windows
+           .\kafka-server-stop.bat      эта команда остановит все сервера
+
+5. Создать новый топик
+        .\kafka-topics.bat --create --topic payment-created-events-topic --partitions 3 --replication-factor 3 --bootstrap-server localhost:9092,localhost:9094 --config key1=value1 --config key2=value2
+
+        разберем команду.
+        --create    - создать топик
+        --topic payment-created-events-topic   - задать имя топика. Оно должно быть уникальным.
+        --partitions 3    - будет три партиции.  Количество партиций должно быть или равно количеству консюмеров, или больше на 1.
+        --replication-factor 3  - партиции будут распределены по трем серверам (то есть по трем брокерам).
+                                    Это значение не должно быть больше, чем число брокеров.
+        --bootstrap-server localhost:9092,localhost:9094    - адрес брокера.
+                                    Можно указать одного, остальные все брокеры подтянутся автоматически,
+                                    но лучше указать как минимум двух, если один будет недоступен.
+        --config key1=value1 --config key2=value2    - добавляем нужные свойства
+
+6. Посмотреть список всех топиков
+        .\kafka-topics.bat --list --bootstrap-server localhost:9092,localhost:9094
+
+        разберем команду.
+        --list      -посмотреть список всех топиков
+        --bootstrap-server localhost:9092,localhost:9094    - адрес брокера.
+                                    Можно указать одного, остальные все брокеры подтянутся автоматически,
+                                    но лучше указать как минимум двух, если один будет недоступен.
+
+7. Детальное описание топиков
+        .\kafka-topics.bat --describe --bootstrap-server localhost:9092,localhost:9094
+
+                разберем команду.
+                --describe      -посмотреть описание всех топиков
+                --bootstrap-server localhost:9092,localhost:9094    - адрес брокера.
+                                            Можно указать одного, остальные все брокеры подтянутся автоматически,
+                                            но лучше указать как минимум двух, если один будет недоступен.
+
+8. Удаление топика - в версии 3.9 на Windows не запускать, потому что все сломается. Это баг этой версии.
+                Примечание: удаление возможно, если настройка  delete.topic.enable=true установлена в true
+                            (она по-умолчанию так и установлена)
+        .\kafka-topics.bat --delete --topic payment-created-events-topic --bootstrap-server localhost:9092,localhost:9094
+
+                 разберем команду.
+                 --delete      -удалить топик
+                 --topic payment-created-events-topic   - задать имя топика, который должен быть удален.
+                 --bootstrap-server localhost:9092,localhost:9094    - адрес брокера.
+                                             Можно указать одного, остальные все брокеры подтянутся автоматически,
+                                             но лучше указать как минимум двух, если один будет недоступен.
+
+9. Отправить сообщение в топик. В отдельном от брокеров окне с командной строкой выполним команду
+                Примечание: чтобы автоматически создавать топики, надо чтобы свойство auto.create.topics.enable=true
+                            было установлено в true (по умолчанию установлено в true)
+        .\kafka-console-producer.bat --bootstrap-server localhost:9092,localhost:9094 --topic payment-canceled-events-topic --property "parse.key=true" --property "key.separator=:"
+
+                разберем команду.
+                --bootstrap-server localhost:9092,localhost:9094    - адрес брокера.
+                                                             Можно указать одного, остальные все брокеры подтянутся автоматически,
+                                                             но лучше указать как минимум двух, если один будет недоступен.
+                --topic payment-canceled-events-topic     - топик, куда надо отправить сообщение. Если не существует, будет создан
+                --property "parse.key=true"    - указываем, что надо будет парсить ключ
+                --property "key.separator=:"    - ключ от значения будет отделяться двоеточием
+
+10. Прочитать сообщение из топика все сообщения с самого начала.
+        .\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9094 --topic payment-canceled-events-topic --from-beginning --property "print.key=true"
+
+                разберем команду.
+                --bootstrap-server localhost:9092,localhost:9094    - адрес брокера.
+                                                                             Можно указать одного, остальные все брокеры подтянутся автоматически,
+                                                                             но лучше указать как минимум двух, если один будет недоступен.
+                --topic payment-canceled-events-topic     - топик, откуда надо прочитать сообщение.
+                --from-beginning    - прочитать с начала топика. Если этот параметр не задан в команде, выводятся только новые сообщения
+                --property "print.key=true"   - распечатывать сообщения с ключом
+
+11. Управление конфигурацией топика. Можно изменить свойства property у топика:
+        добавить свойство
+        .\kafka-configs.bat --bootstrap-server localhost:9092,localhost:9094 --entity-type topics --entity-name <topic_name> --alter --add-config <key>=<value>
+
+        удалить свойство
+        .\kafka-configs.bat --bootstrap-server localhost:9092,localhost:9094 --entity-type topics --entity-name <topic_name> --alter --delete-config <key>
