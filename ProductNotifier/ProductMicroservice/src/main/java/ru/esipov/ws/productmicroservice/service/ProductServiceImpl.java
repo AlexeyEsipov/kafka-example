@@ -1,5 +1,6 @@
 package ru.esipov.ws.productmicroservice.service;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import ru.esipov.ws.core.CreateProductDto;
 import ru.esipov.ws.core.ProductCreatedEvent;
 import org.slf4j.Logger;
@@ -50,8 +51,16 @@ public class ProductServiceImpl implements ProductService{
         // TODO save DB
         String productId = UUID.randomUUID().toString();
         ProductCreatedEvent productCreatedEvent = new ProductCreatedEvent(productId, createProductDto);
+
+        ProducerRecord<String, ProductCreatedEvent> producerRecord = new ProducerRecord<>(
+                "product-created-events-topic",
+                productId,
+                productCreatedEvent);
+
+        producerRecord.headers().add("messageId", UUID.randomUUID().toString().getBytes());
+
         SendResult<String, ProductCreatedEvent> result = kafkaTemplate
-                .send("product-created-events-topic", productId, productCreatedEvent).get();
+                .send(producerRecord).get();
 
         // этот лог чтобы проверить, что у нас отправка действительно работает в синхронном режиме.
         LOGGER.info("Topic: {}", result.getRecordMetadata().topic());
