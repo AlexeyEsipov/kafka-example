@@ -51,11 +51,11 @@ server.properties - конфигурация сервера, который де
 
 3. Собственно запуск кластера производится из каталога C:\Tools\kafka_2.13-3.9.1\bin\windows
         команда для получения уникального идентификатора кластера
-         - Команда    .\kafka-storage.bat random-uuid  вернет уникальный ИДЕНТИФИКАТОР, его надо сохранить.
+         - Команда    .\kafka-storage.bat random-uuid  вернет уникальный ИДЕНТИФИКАТОР, его надо сохранить.  GLKUDnEBTpa_QW2Y9A5PyA
          форматируем директории логов для каждого сервера
-         - .\kafka-storage.bat format -t ИДЕНТИФИКАТОР -c ..\..\config\kraft\server-1.properties
-           .\kafka-storage.bat format -t ИДЕНТИФИКАТОР -c ..\..\config\kraft\server-2.properties
-           .\kafka-storage.bat format -t ИДЕНТИФИКАТОР -c ..\..\config\kraft\server-3.properties
+         - .\kafka-storage.bat format -t GLKUDnEBTpa_QW2Y9A5PyA -c ..\..\config\kraft\server-1.properties
+           .\kafka-storage.bat format -t GLKUDnEBTpa_QW2Y9A5PyA -c ..\..\config\kraft\server-2.properties
+           .\kafka-storage.bat format -t GLKUDnEBTpa_QW2Y9A5PyA -c ..\..\config\kraft\server-3.properties
          проверим, что создались каталоги в папке tmp
 
          Запускаем каждый сервер в отдельном окне командной строки. Они должны быть открыты на протяжении всего времени работы сервера

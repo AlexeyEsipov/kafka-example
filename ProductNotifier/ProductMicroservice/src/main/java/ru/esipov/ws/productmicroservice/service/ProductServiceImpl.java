@@ -57,7 +57,10 @@ public class ProductServiceImpl implements ProductService{
                 productId,
                 productCreatedEvent);
 
-        producerRecord.headers().add("messageId", UUID.randomUUID().toString().getBytes());
+        // для проверки случайный messageId заменим на константный
+        String messId = "1234568-552";
+        producerRecord.headers().add("messageId", messId.getBytes());
+//        producerRecord.headers().add("messageId", UUID.randomUUID().toString().getBytes());
 
         SendResult<String, ProductCreatedEvent> result = kafkaTemplate
                 .send(producerRecord).get();

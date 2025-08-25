@@ -20,7 +20,7 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import ru.esipov.ws.emailnotification.persistence.entity.ProcessedEventEntity;
-import ru.esipov.ws.emailnotification.persistence.entity.repository.ProcessEventRepository;
+import ru.esipov.ws.emailnotification.persistence.repository.ProcessEventRepository;
 
 @Component
 //@KafkaListener(topics = "product-created-events-topic", groupId = "product-created-events") // можно указать groupID тут

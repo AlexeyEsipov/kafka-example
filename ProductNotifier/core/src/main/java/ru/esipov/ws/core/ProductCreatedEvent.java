@@ -7,12 +7,12 @@ public class ProductCreatedEvent {
     private String productId;
     private String title;
     private BigDecimal price;
-    private BigDecimal quantity;
+    private Integer quantity;
 
     public ProductCreatedEvent() {
     }
 
-    public ProductCreatedEvent(String productId, String title, BigDecimal price, BigDecimal quantity) {
+    public ProductCreatedEvent(String productId, String title, BigDecimal price, Integer quantity) {
         this.productId = productId;
         this.title = title;
         this.price = price;
@@ -50,11 +50,11 @@ public class ProductCreatedEvent {
         this.price = price;
     }
 
-    public BigDecimal getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(BigDecimal quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 }

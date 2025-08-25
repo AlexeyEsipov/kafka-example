@@ -1,4 +1,4 @@
-package ru.esipov.ws.emailnotification.persistence.entity.repository;
+package ru.esipov.ws.emailnotification.persistence.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.esipov.ws.emailnotification.persistence.entity.ProcessedEventEntity;

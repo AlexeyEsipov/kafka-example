@@ -5,12 +5,12 @@ import java.math.BigDecimal;
 public class CreateProductDto {
     private String title;
     private BigDecimal price;
-    private BigDecimal quantity;
+    private Integer quantity;
 
     public CreateProductDto() {
     }
 
-    public CreateProductDto(String title, BigDecimal price, BigDecimal quantity) {
+    public CreateProductDto(String title, BigDecimal price, Integer quantity) {
         this.title = title;
         this.price = price;
         this.quantity = quantity;
@@ -33,11 +33,11 @@ public class CreateProductDto {
         this.price = price;
     }
 
-    public BigDecimal getQuantity() {
+    public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(BigDecimal quantity) {
+    public void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 }
