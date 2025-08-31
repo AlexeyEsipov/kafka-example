@@ -27,7 +27,7 @@ import ru.esipov.ws.emailnotification.persistence.repository.ProcessEventReposit
 @KafkaListener(topics = "product-created-events-topic")
 public class ProductCreatedEventHandler {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
     private final ProcessEventRepository processEventRepository;
 
     public ProductCreatedEventHandler(RestTemplate restTemplate, ProcessEventRepository processEventRepository) {
@@ -77,7 +77,5 @@ public class ProductCreatedEventHandler {
             logger.error(e.getMessage());
             throw new NonRetryableException(e);
         }
-
-
     }
 }

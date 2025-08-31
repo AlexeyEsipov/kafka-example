@@ -51,7 +51,7 @@ public class KafkaConfig {
 
     @Bean
     ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory(ConsumerFactory<String, Object> consumerFactory,
-                                                                                          KafkaTemplate kafkaTemplate) {
+                                                                                          KafkaTemplate<String, Object> kafkaTemplate) {
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(new DeadLetterPublishingRecoverer(kafkaTemplate),
                 new FixedBackOff(3000, 3)); // интервал 3 сек, делать 3 попытки
         // можно указать несколько ошибок, которые будут обработаны как notRetry, но пока оставим только одну.
